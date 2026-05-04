@@ -1,0 +1,6 @@
+streamlit
+google-genai
+pandas
+fpdf
+azure-ai-formrecognizer==3.3.3
+openpyxl
