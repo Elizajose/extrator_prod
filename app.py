@@ -5,48 +5,68 @@ import json
 import pandas as pd
 from extrator import extrair_dados_com_azure, cruzar_dados_com_gemini
 
-# [MANTER O SEU CÓDIGO DE INTERFACE AQUI EM CIMA: Título, Upload de TXT e Upload dos PDFs com limite de 10]
+st.set_page_config(page_title="Extrator Híbrido V2", layout="wide")
 
-if st.button("🚀 Processar Análise"):
+st.title("🚀 Extrator de Orçamentos V2")
+st.markdown("---")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("1. Lista de Desejos")
+    # Criando a variável que faltava!
+    arquivo_txt = st.file_uploader("Suba sua lista (.txt)", type=['txt'])
+
+with col2:
+    st.subheader("2. Orçamentos")
+    # Criando a segunda variável com o limite de 10 que você pediu!
+    arquivos_pdfs = st.file_uploader("Suba até 10 PDFs", type=['pdf'], accept_multiple_files=True)
+    if arquivos_pdfs and len(arquivos_pdfs) > 10:
+        st.error("Limite de 10 arquivos excedido! Por favor, remova alguns.")
+        arquivos_pdfs = None
+
+st.markdown("---")
+
+if st.button("📊 Processar Análise Híbrida"):
     if not arquivo_txt or not arquivos_pdfs:
-        st.warning("Por favor, suba a lista de compras e os orçamentos.")
+        st.warning("Opa! Preciso da lista TXT e de pelo menos um PDF para trabalhar.")
     else:
         texto_lista = arquivo_txt.getvalue().decode("utf-8")
         
-        with st.spinner('Lendo PDFs com Azure e cruzando dados com IA...'):
+        with st.spinner('Azure lendo tabelas e Gemini comparando itens...'):
             lista_geral_bruta = []
             
-            # Passo 1: Extração mecânica de todos os PDFs
             for arquivo_pdf in arquivos_pdfs:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                     tmp.write(arquivo_pdf.getvalue())
                     caminho_temporario = tmp.name
                 
                 try:
+                    # Motor 1: Azure
                     itens_deste_pdf = extrair_dados_com_azure(caminho_temporario)
                     lista_geral_bruta.extend(itens_deste_pdf)
                 except Exception as e:
-                    st.error(f"Falha de leitura no arquivo {arquivo_pdf.name}: {e}")
+                    st.error(f"Erro no arquivo {arquivo_pdf.name}: {e}")
                 finally:
                     if os.path.exists(caminho_temporario):
                         os.unlink(caminho_temporario)
             
-            # Passo 2: Raciocínio lógico e semântico via Gemini
             if lista_geral_bruta:
+                # Motor 2: Gemini
                 resultado_str = cruzar_dados_com_gemini(lista_geral_bruta, texto_lista)
                 
-                if "Erro" in resultado_str:
-                    st.error(resultado_str)
-                else:
-                    try:
-                        dados_finais = json.loads(resultado_str)
-                        # Exibindo o resultado final na tela em formato de tabela
-                        df_resultado = pd.DataFrame(dados_finais)
-                        st.success("Análise concluída com sucesso!")
-                        st.dataframe(df_resultado, use_container_width=True)
-                    except json.JSONDecodeError:
-                        st.error("Falha ao organizar o resultado final.")
+                try:
+                    dados_finais = json.loads(resultado_str)
+                    df_resultado = pd.DataFrame(dados_finais)
+                    
+                    st.success("🎯 Análise de Menor Preço Concluída!")
+                    st.dataframe(df_resultado, use_container_width=True)
+                    
+                    # Botão para baixar Excel (precisa do openpyxl instalado!)
+                    csv = df_resultado.to_csv(index=False).encode('utf-8')
+                    st.download_button("📥 Baixar Resultado (CSV)", csv, "analise_precos.csv", "text/csv")
+                    
+                except Exception as e:
+                    st.error(f"Erro ao processar resposta da IA: {resultado_str}")
             else:
-                st.warning("Nenhum item válido foi encontrado em nenhum dos orçamentos.")
-
-# [MANTER O SEU CÓDIGO DE DOWNLOAD DE PDF/EXCEL AQUI EMBAIXO]
+                st.error("O Azure não conseguiu extrair dados dos PDFs. Verifique se são PDFs de orçamentos válidos.")
