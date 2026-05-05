@@ -19,20 +19,30 @@ gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 # ==========================================
 def extrair_dados_com_azure(caminho_pdf):
     with open(caminho_pdf, "rb") as f:
+        # O Azure analisa o documento aqui
         poller = azure_client.begin_analyze_document("prebuilt-invoice", document=f)
     
     recibos = poller.result()
     itens_extraidos = []
 
     for recibo in recibos.documents:
-        nome_empresa = recibo.fields.get("VendorName").value if recibo.fields.get("VendorName") else "Não informado"
-        cnpj = recibo.fields.get("VendorTaxId").value if recibo.fields.get("VendorTaxId") else "Não informado"
+        # Pegamos o nome da empresa e limpamos para texto puro[cite: 1, 2, 3]
+        nome_empresa = str(recibo.fields.get("VendorName").value) if recibo.fields.get("VendorName") else "Não informado"
+        cnpj = str(recibo.fields.get("VendorTaxId").value) if recibo.fields.get("VendorTaxId") else "Não informado"
         
         if recibo.fields.get("Items"):
             for item in recibo.fields.get("Items").value:
-                descricao = item.value.get("Description").value if item.value.get("Description") else "Sem descrição"
-                preco = item.value.get("UnitPrice").value if item.value.get("UnitPrice") else 0.0
-                confianca = item.value.get("Description").confidence if item.value.get("Description") else 0.0
+                # Forçamos a conversão para String (str) ou Float (float) para o JSON não quebrar
+                descricao = str(item.value.get("Description").value) if item.value.get("Description") else "Sem descrição"
+                
+                # Tratamento para garantir que o preço seja um número real[cite: 1, 2, 3]
+                preco_val = item.value.get("UnitPrice").value if item.value.get("UnitPrice") else 0.0
+                try:
+                    preco = float(preco_val)
+                except:
+                    preco = 0.0
+
+                confianca = float(item.value.get("Description").confidence) if item.value.get("Description") else 0.0
 
                 itens_extraidos.append({
                     "descricao_loja": descricao,

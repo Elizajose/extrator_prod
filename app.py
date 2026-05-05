@@ -59,7 +59,7 @@ if st.button("📊 Processar Análise Híbrida"):
                     dados_finais = json.loads(resultado_str)
                     df_resultado = pd.DataFrame(dados_finais)
                     
-                    st.success("🎯 Análise de Menor Preço Concluída!")
+                    st.success("🎯 Análise de Menor Preço Concluída!!")
                     st.dataframe(df_resultado, use_container_width=True)
                     
                     # Botão para baixar Excel (precisa do openpyxl instalado!)
