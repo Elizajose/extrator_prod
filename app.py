@@ -9,7 +9,7 @@ from extrator import extrair_dados_com_azure, cruzar_dados_com_gemini
 # 1. Configuração da Página
 st.set_page_config(page_title="Extrator Híbrido V2", layout="wide", initial_sidebar_state="expanded")
 
-# --- ESTILIZAÇÃO CSS ---
+# --- ESTILIZAÇÃO CSS (Foco em Centralização e Modernidade) ---
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; }
@@ -26,11 +26,13 @@ st.markdown("""
     }
     .stButton>button:hover { background-color: #4338ca; color: white; }
     
-    /* Centralização e ajuste do container de login */
-    [data-testid="stVerticalBlock"] > div:has(div.login-box) {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+    /* Forçar centralização da imagem de perfil no login */
+    .img-center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 100px;
+        margin-bottom: 20px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -50,26 +52,27 @@ if "autenticado" not in st.session_state:
 if "pagina_atual" not in st.session_state:
     st.session_state.pagina_atual = "Novo Processamento"
 
-# 4. TELA DE LOGIN (CORRIGIDA E MODERNIZADA)
+# 4. TELA DE LOGIN (CORRIGIDA: ÍCONE AZUL E CENTRALIZADO)
 if not st.session_state.autenticado:
-    _, col_login, _ = st.columns([1, 1.5, 1])
+    _, col_login, _ = st.columns([1, 1.2, 1]) # Ajustei a largura para o box ficar mais elegante
     
     with col_login:
-        st.write("##") # Espaçamento para descer o box
+        st.write("##") # Espaçamento vertical
         with st.container(border=True):
-            # Ícone de Bonequinho (Estilo MSN/Perfil)
-            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-            st.image("https://cdn-icons-png.flaticon.com/512/1077/1077114.png", width=100)
-            st.markdown("</div>", unsafe_allow_html=True)
+            # Ícone de Perfil Azul e Branco Centralizado via HTML
+            st.markdown(
+                '<img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="img-center">', 
+                unsafe_allow_html=True
+            )
             
             st.markdown("<h2 style='text-align: center;'>Acesso Restrito</h2>", unsafe_allow_html=True)
-            st.markdown("<p style='text-align: center;'>Insira suas credenciais para acessar a plataforma.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align: center; color: #8b949e;'>Insira suas credenciais para acessar a plataforma.</p>", unsafe_allow_html=True)
             
             # Campos com Placeholders Cinzas
             usuario_input = st.text_input("Usuário", placeholder="Insira seu usuário")
             senha_input = st.text_input("Senha", type="password", placeholder="Insira sua senha")
             
-            st.write(" ") # Respiro
+            st.write(" ") 
             
             if st.button("Entrar na Plataforma", use_container_width=True):
                 try:
@@ -79,11 +82,11 @@ if not st.session_state.autenticado:
                         if user['status'] == 'ativo':
                             st.session_state.autenticado = True
                             st.session_state.usuario_logado = user['usuario']
+                            # Pega o cargo dinamicamente da coluna 'cargo'
                             st.session_state.cargo_usuario = user.get('cargo', 'Cliente')
-                            st.success("Login realizado!")
                             st.rerun()
                         else:
-                            st.error("⛔ Conta desativada.")
+                            st.error("⛔ Conta inativa. Contate o suporte.")
                     else:
                         st.error("Usuário ou senha incorretos.")
                 except Exception as e:
@@ -94,7 +97,6 @@ if not st.session_state.autenticado:
 # DASHBOARD (TELA PRINCIPAL)
 # =========================================================================
 
-# SIDEBAR NAVEGÁVEL
 with st.sidebar:
     st.title("💎 Extrator V2")
     st.markdown("---")
@@ -114,12 +116,10 @@ with st.sidebar:
         st.session_state.autenticado = False
         st.rerun()
 
-# LÓGICA DE NAVEGAÇÃO
 if st.session_state.pagina_atual == "Novo Processamento":
     st.title(f"Olá, {st.session_state.usuario_logado}! 👋")
     st.write("Vamos processar novos orçamentos agora.")
 
-    # ÁREA DE UPLOAD
     col_a, col_b = st.columns(2)
     with col_a:
         with st.container(border=True):
@@ -149,7 +149,7 @@ if st.session_state.pagina_atual == "Novo Processamento":
                         st.error(f"Erro no PDF {arquivo_pdf.name}: {e}")
                     finally:
                         if os.path.exists(caminho_tmp):
-                            os.unlink(caminho_tmp)
+                            os.unlink(camin_tmp)
                 
                 if lista_geral_bruta:
                     res_ia = cruzar_dados_com_gemini(lista_geral_bruta, texto_lista)
@@ -158,14 +158,14 @@ if st.session_state.pagina_atual == "Novo Processamento":
                         st.success("🎯 Análise Concluída!")
                         st.dataframe(pd.DataFrame(dados), use_container_width=True)
                     except:
-                        st.error(f"IA retornou formato inválido: {res_ia}")
+                        st.error("Falha ao formatar resposta da IA.")
                 else:
                     st.error("Nenhum dado extraído.")
 
 elif st.session_state.pagina_atual == "Dashboard":
     st.title("📊 Painel de Performance")
-    st.info("As estatísticas reais de economia e volume aparecerão aqui após os primeiros processamentos serem salvos no banco.")
+    st.info("Estatísticas reais em breve.")
 
 elif st.session_state.pagina_atual == "Histórico":
     st.title("📜 Histórico de Análises")
-    st.info("Em breve: Você poderá consultar todas as análises feitas anteriormente.")
+    st.info("Em breve: Consulta de processamentos anteriores.")
