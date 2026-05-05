@@ -98,7 +98,7 @@ if not st.session_state.autenticado:
 # =========================================================================
 
 with st.sidebar:
-    st.title("💎 Extrator V2")
+    st.title("🔍📄 Extrator Híbrido")
     st.markdown("---")
     
     if st.button("🏠 Dashboard"):
