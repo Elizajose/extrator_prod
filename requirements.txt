@@ -1,6 +1,6 @@
 streamlit
-google-genai
 pandas
+google-generativeai
 fpdf
 azure-ai-formrecognizer==3.3.3
 openpyxl
