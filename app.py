@@ -15,7 +15,8 @@ try:
     key: str = st.secrets["SUPABASE_KEY"]
     supabase: Client = create_client(url, key)
 except Exception as e:
-    st.error("Erro ao conectar com o banco de dados. Verifique as chaves (Secrets).")
+    # AQUI ESTÁ A CORREÇÃO: Agora ele vai mostrar o erro real vindo do Python/Supabase
+    st.error(f"Erro ao conectar com o banco de dados. Detalhes: {e}")
     st.stop()
 
 # 3. Gerenciamento de Sessão (Memória do Login)
