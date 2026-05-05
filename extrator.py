@@ -12,7 +12,7 @@ GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 
 # Inicializando motores
 azure_client = DocumentAnalysisClient(endpoint=AZURE_ENDPOINT, credential=AzureKeyCredential(AZURE_KEY))
-gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
 
 # ==========================================
 # MOTOR 1: OPERACIONAL (AZURE) - Lê as tabelas com perfeição
@@ -86,10 +86,12 @@ def cruzar_dados_com_gemini(lista_todos_itens, texto_lista):
     """
     
     try:
-        resposta = gemini_client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt
-        )
+        # AQUI É A MUDANÇA: Usamos a forma oficial e estável da biblioteca
+        # Mudei para 'gemini-1.5-flash' porque é o nome exato reconhecido por essa biblioteca
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # O envio do seu prompt gigantesco e detalhado
+        resposta = model.generate_content(prompt)
         
         texto = resposta.text
         match = re.search(r'\[.*\]', texto, re.DOTALL)
