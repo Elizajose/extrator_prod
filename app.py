@@ -7,7 +7,7 @@ import pandas as pd
 from extrator import extrair_dados_com_azure, cruzar_dados_com_gemini
 
 # 1. Configuração da Página
-st.set_page_config(page_title="Extrator Híbrido V2", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Extrator Híbrido", layout="wide", initial_sidebar_state="expanded")
 
 # --- ESTILIZAÇÃO CSS (Foco em Centralização e Modernidade) ---
 st.markdown("""
