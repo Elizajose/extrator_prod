@@ -7,7 +7,7 @@ import pandas as pd
 from extrator import extrair_dados_com_azure, cruzar_dados_com_gemini
 
 # 1. Configuração da Página
-st.set_page_config(page_title="Extrator Híbrido", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Extrator Híbrido V2", layout="wide", initial_sidebar_state="expanded")
 
 # --- ESTILIZAÇÃO CSS ---
 st.markdown("""
@@ -26,13 +26,11 @@ st.markdown("""
     }
     .stButton>button:hover { background-color: #4338ca; color: white; }
     
-    /* Container de Login */
-    .login-box {
-        text-align: center;
-        padding: 40px;
-        background-color: #161b22;
-        border-radius: 15px;
-        border: 1px solid #30363d;
+    /* Centralização e ajuste do container de login */
+    [data-testid="stVerticalBlock"] > div:has(div.login-box) {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -52,33 +50,44 @@ if "autenticado" not in st.session_state:
 if "pagina_atual" not in st.session_state:
     st.session_state.pagina_atual = "Novo Processamento"
 
-# 4. TELA DE LOGIN
+# 4. TELA DE LOGIN (CORRIGIDA E MODERNIZADA)
 if not st.session_state.autenticado:
-    _, col_login, _ = st.columns([1, 1.2, 1])
+    _, col_login, _ = st.columns([1, 1.5, 1])
+    
     with col_login:
-        st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        # Imagem de referência a login seguro
-        st.image("https://cdn-icons-png.flaticon.com/512/2592/2592317.png", width=100) 
-        st.title("Acesso Restrito")
-        st.write("Insira suas credenciais para acessar a plataforma.")
-        
-        usuario_input = st.text_input("Usuário", placeholder="ex: fabricio")
-        senha_input = st.text_input("Senha", type="password", placeholder="••••••••")
-        
-        if st.button("Entrar na Plataforma"):
-            res = supabase.table("clientes").select("*").eq("usuario", usuario_input).eq("senha", senha_input).execute()
-            if len(res.data) > 0:
-                user = res.data[0]
-                if user['status'] == 'ativo':
-                    st.session_state.autenticado = True
-                    st.session_state.usuario_logado = user['usuario']
-                    st.session_state.cargo_usuario = user.get('cargo', 'Cliente') # Busca o cargo do banco
-                    st.rerun()
-                else:
-                    st.error("⛔ Conta desativada.")
-            else:
-                st.error("Usuário ou senha inválidos.")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.write("##") # Espaçamento para descer o box
+        with st.container(border=True):
+            # Ícone de Bonequinho (Estilo MSN/Perfil)
+            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+            st.image("https://cdn-icons-png.flaticon.com/512/1077/1077114.png", width=100)
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            st.markdown("<h2 style='text-align: center;'>Acesso Restrito</h2>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align: center;'>Insira suas credenciais para acessar a plataforma.</p>", unsafe_allow_html=True)
+            
+            # Campos com Placeholders Cinzas
+            usuario_input = st.text_input("Usuário", placeholder="Insira seu usuário")
+            senha_input = st.text_input("Senha", type="password", placeholder="Insira sua senha")
+            
+            st.write(" ") # Respiro
+            
+            if st.button("Entrar na Plataforma", use_container_width=True):
+                try:
+                    res = supabase.table("clientes").select("*").eq("usuario", usuario_input).eq("senha", senha_input).execute()
+                    if len(res.data) > 0:
+                        user = res.data[0]
+                        if user['status'] == 'ativo':
+                            st.session_state.autenticado = True
+                            st.session_state.usuario_logado = user['usuario']
+                            st.session_state.cargo_usuario = user.get('cargo', 'Cliente')
+                            st.success("Login realizado!")
+                            st.rerun()
+                        else:
+                            st.error("⛔ Conta desativada.")
+                    else:
+                        st.error("Usuário ou senha incorretos.")
+                except Exception as e:
+                    st.error(f"Erro: {e}")
     st.stop()
 
 # =========================================================================
@@ -99,7 +108,7 @@ with st.sidebar:
     
     st.markdown("---")
     st.write(f"👤 **{st.session_state.usuario_logado}** 👋")
-    st.caption(f"{st.session_state.cargo_usuario}") # Cargo dinâmico
+    st.caption(f"{st.session_state.cargo_usuario}")
     
     if st.button("Sair do Sistema", type="secondary"):
         st.session_state.autenticado = False
@@ -136,8 +145,11 @@ if st.session_state.pagina_atual == "Novo Processamento":
                     try:
                         itens = extrair_dados_com_azure(caminho_tmp)
                         lista_geral_bruta.extend(itens)
+                    except Exception as e:
+                        st.error(f"Erro no PDF {arquivo_pdf.name}: {e}")
                     finally:
-                        if os.path.exists(camin_tmp): os.unlink(camin_tmp)
+                        if os.path.exists(caminho_tmp):
+                            os.unlink(caminho_tmp)
                 
                 if lista_geral_bruta:
                     res_ia = cruzar_dados_com_gemini(lista_geral_bruta, texto_lista)
@@ -146,9 +158,9 @@ if st.session_state.pagina_atual == "Novo Processamento":
                         st.success("🎯 Análise Concluída!")
                         st.dataframe(pd.DataFrame(dados), use_container_width=True)
                     except:
-                        st.error("Falha ao formatar resposta da IA.")
+                        st.error(f"IA retornou formato inválido: {res_ia}")
                 else:
-                    st.error("Nenhum dado extraído dos PDFs.")
+                    st.error("Nenhum dado extraído.")
 
 elif st.session_state.pagina_atual == "Dashboard":
     st.title("📊 Painel de Performance")
