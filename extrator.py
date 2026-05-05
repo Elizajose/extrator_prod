@@ -3,7 +3,7 @@ import streamlit as st
 import re
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.formrecognizer import DocumentAnalysisClient
-from google import genai
+import google.generativeai as genai
 
 # Puxando chaves do cofre
 AZURE_ENDPOINT = st.secrets["AZURE_ENDPOINT"]
