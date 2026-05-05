@@ -4,4 +4,4 @@ google-generativeai
 fpdf
 azure-ai-formrecognizer==3.3.3
 openpyxl
-supabase==2.4.3
+supabase
